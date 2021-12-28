@@ -1,134 +1,71 @@
 function checkCashRegister(price, cash, cid) {
-    let changeDue = cash - price;
-    let CashInDrawer = 0;
+    let changeDueValue = cash - price;
+    let cashInDrawer = 0;
     let change = {status: '', change: []};
-    for(let i of cid){
-        CashInDrawer += i[1];
-        // console.log(i[1])
+    for (let i of cid) {
+        cashInDrawer = Math.round((cashInDrawer + i[1]) * 100 ) / 100;
     }
 
-    if (CashInDrawer < changeDue){
+    if (cashInDrawer < changeDueValue  ) {
         change.status = "INSUFFICIENT_FUNDS";
         change.change = [];
-    }
-    else if (changeDue === CashInDrawer){
+    } else if (changeDueValue === cashInDrawer) {
         change.status = "CLOSED";
         change.change = cid;
-    }
-    else{
+    } else {
+        let basicDollarUnits = [100, 20, 10, 5, 1, 0.25, 0.1, 0.05, 0.01];  //These numbers represents Dollar bills and coins.
+        let changeDue = [
+            ["ONE HUNDRED", 0],
+            ["TWENTY", 0],
+            ["TEN", 0],
+            ["FIVE", 0],
+            ["ONE", 0],
+            ["QUARTER", 0],
+            ["DIME", 0],
+            ["NICKEL", 0],
+            ["PENNY", 0]
+        ];
+        cid.reverse();
+        for (let item in basicDollarUnits) {
+
+            if (changeDueValue >= basicDollarUnits[item]) {
+
+                const cidValue = cid[item][1]; // get the money in a specific part of the drawer. (hundreds part)
+
+                if (changeDueValue < cidValue) {
+                    // get un-divisible-value to know how much we can't pay of this drawer part. (should be rounded)
+                    let unDivisibleVal = Math.round((changeDueValue % basicDollarUnits[item]) * 100) / 100;
+                    let paymentValue = Math.round((changeDueValue - unDivisibleVal) * 100) / 100;
+                    changeDue[item][1] = paymentValue;
+                    changeDueValue = Math.round((changeDueValue - paymentValue) * 100) / 100;
+
+                } else {
+
+                    let unDivisibleVal = Math.round((changeDueValue - cidValue) * 100) / 100;
+                    let paymentValue = Math.round((changeDueValue - unDivisibleVal) * 100) / 100; // find how much we should pay
+                    changeDue[item][1] = paymentValue;
+                    changeDueValue = Math.round((changeDueValue - paymentValue) * 100) / 100;
+
+                }
+            }
+        }
+        if (changeDueValue !== 0){
+            change.status = 'INSUFFICIENT_FUNDS';
+            change.change = [];
+        }
+        else{
+            change.status = "OPEN";
+            change.change = changeDue.filter(item => item[1] !== 0);
+        }
 
     }
-    // console.log('this is total: ' + CashInDrawer)
+    return change
 }
 
-checkCashRegister(19.5, 20, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25],
-                                ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]]);
-
-// ------------------------------- some examples ----------------------
-//
-//checkCashRegister(19.5, 20, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25], ["ONE", 90],
-//["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]]) should return an object.
-//
-// checkCashRegister(19.5, 20, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25],
-// ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]])
-////should return {status: "OPEN", change: [["QUARTER", 0.5]]}.
-//
-// checkCashRegister(3.26, 100, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25], ["ONE", 90],
-// ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]])
-//// should return {status: "OPEN", change: [["TWENTY", 60], ["TEN", 20], ["FIVE", 15], ["ONE", 1], ["QUARTER", 0.5],
-// ["DIME", 0.2], ["PENNY", 0.04]]}.
-//
-// checkCashRegister(19.5, 20, [["PENNY", 0.01], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 0],
-// ["FIVE", 0], ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]])
-////should return {status: "INSUFFICIENT_FUNDS", change: []}.
-//
-// checkCashRegister(19.5, 20, [["PENNY", 0.01], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 1], ["FIVE", 0],
-// ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]])
-// //should return {status: "INSUFFICIENT_FUNDS", change: []}.
-//
-// checkCashRegister(19.5, 20, [["PENNY", 0.5], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 0], ["FIVE", 0],
-// ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]])
-////should return {status: "CLOSED", change: [["PENNY", 0.5], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 0],
-// ["FIVE", 0], ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]]}.
-//----------------------------------------------------------------
-
-
-
-//[["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25],
-// ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60],
-// ["ONE HUNDRED", 100]]
-
-// should return
-
-//["QUARTER", 0.5]]
-
-//----------------------------------------
-
-// price => 3.26
-// payment => 100
-
-// change due => 96.74
-// console.log(Math.round((96.74 % 20) * Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10) * Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10 % 5) * Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10 % 5 % 0.25) * Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10 % 5 % 0.25 % 0.10 )* Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10 % 5 % 0.25 % 0.10 % 0.05) * Math.pow(10, 2))/ 100)
-// console.log(Math.round((96.74 % 20 % 10 % 5 % 0.25 % 0.10 % 0.05 % 1) * Math.pow(10, 2))/ 100)
-
-// 96.74 - 60 => 36.74
-// 36.74 - 20 => 16.74
-// 16.74 - 55 => 38.26
-
-
-
-// total = 335.41
-// money in the drawer
-//
-// [["ONE HUNDRED", 100],
-// ["TWENTY", 60],
-// ["TEN", 20],
-// ["FIVE", 55],
-// ["ONE", 90],
-// ["QUARTER", 4.25],
-// ["DIME", 3.1],
-// ["NICKEL", 2.05],
-//["PENNY", 1.01]]
-
-// console.log(20 < 96.74)
-// console.log(Math.round(((96.74 - 60) * Math.pow(10, 2)) / 100))
-// console.log(Math.round((96.74 - 60) * 100)/ 100)
-// console.log(Math.round((36.74 - 20) * 100)/ 100)
-// console.log(Math.round((16.74 - 10) * 100)/ 100)
-// console.log(96.74 / 20)
-
-// change due => 96.74
-console.log(4.25 - 0.5)
-console.log(4.25 - (4.25 - 0.5))
-console.log(55 - 15)
-console.log(55 - 40)
-console.log()
-
-// should return
-//[["TWENTY", 60],
-// ["TEN", 20],
-// ["FIVE", 15],
-// ["ONE", 1],
-// ["QUARTER", 0.5],
-// ["DIME", 0.2],
-// ["PENNY", 0.04]]
-// total = 96.74
-
-let result = [];
-let valOfArr = [];
-let x = 0;
-let remaining = 96.74;
-if( remaining > 100){
-    remaining -= valOfArr[0];
-    result[0] = remaining;
-}
-else if ( remaining > 20){
-    remaining -= valOfArr[1];
-    result[1] = remaining
-}
-
+console.log(checkCashRegister(19.5, 20, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25],
+    ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]]));
+console.log(checkCashRegister(3.26, 100, [["PENNY", 1.01], ["NICKEL", 2.05], ["DIME", 3.1], ["QUARTER", 4.25], ["ONE", 90], ["FIVE", 55], ["TEN", 20], ["TWENTY", 60], ["ONE HUNDRED", 100]]));
+console.log(checkCashRegister(19.5, 20, [["PENNY", 0.01], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 0], ["FIVE", 0], ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]]));
+console.log(checkCashRegister(19.5, 20, [["PENNY", 0.01], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 1], ["FIVE", 0], ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]]));
+// console.log('---------------------------------=========---------------')
+console.log(checkCashRegister(19.5, 20, [["PENNY", 0.5], ["NICKEL", 0], ["DIME", 0], ["QUARTER", 0], ["ONE", 0], ["FIVE", 0], ["TEN", 0], ["TWENTY", 0], ["ONE HUNDRED", 0]]))
